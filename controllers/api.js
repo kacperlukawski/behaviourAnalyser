@@ -1,9 +1,19 @@
 var stampit = require('stampit');
+var abstractController = require('./abstract');
 
-module.exports = stampit().enclose(function() {
-    var sessionsContainer = require('./../helpers/sessionsContainer')();
+var apiController = stampit().enclose(function() {
     var database = null;
     var indexManager = null;
+    var indexName = 'events';
+
+    var parseResults = function(data) {
+        var results = [];
+        for (i in data) {
+            results.push(data[i]['event'].getProperties());
+        }
+
+        return results;
+    };
 
     /**
      * Sets routes for the controller
@@ -21,8 +31,8 @@ module.exports = stampit().enclose(function() {
         database = _database;
         indexManager = database.index();
         var transaction = database.beginTx();
-        if (!indexManager.existsForNodes('nodes')) {
-            indexManager.forNodes('nodes');
+        if (!indexManager.existsForNodes(indexName)) {
+            indexManager.forNodes(indexName);
         }
         transaction.success();
         transaction.finish();
@@ -34,14 +44,24 @@ module.exports = stampit().enclose(function() {
      * @param {response} res
      */
     this.all = function(req, res) {
-        database.query(
-                'MATCH (a)-[:PRECEDES]->(b) \n' +
-                'RETURN b._e', function(error, result) {
+        var query = database.queryBuilder();
+        query.startAt({
+            'event': 'node(*)'
+        });
+        query.returns('event');
+        query.execute({}, function(error, data, total) {
             res.json({
                 'error': error,
-                'result': result
+                'data': parseResults(data),
+                'total': total
             });
         });
     };
 
+    this.runTask = function(req, res) {
+        // TODO
+    };
+
 });
+
+module.exports = stampit.compose(abstractController, apiController);
