@@ -1,0 +1,8 @@
+{
+    "VM": "-Xmx1024m",
+    "databaseProperties": {
+        "org.neo4j.server.manage.console_engines": "shell",
+        "org.neo4j.server.webserver.port": "7575"
+    },
+    "databaseName": "events.db"
+}

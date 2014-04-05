@@ -1,0 +1,16 @@
+{
+    "name": "behaviourAnalyser",
+    "version": "0.1.0",
+    "description": "Application that analyzes user behaviour using graph methods",
+    "dependencies": {
+        "async": "*",
+        "neo4j-embedded": "git://github.com/joewhite86/node-neo4j-embedded.git#neo4j-2.x",
+        "stampit": "*",
+        "express": "3.0.0"
+    },
+    "main": "app.js",
+    "author": {
+        "name": "Kacper Łukawski",
+        "email": "lukawski.kacper@gmail.com"    
+    }
+}
