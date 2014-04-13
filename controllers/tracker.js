@@ -38,8 +38,9 @@ module.exports = stampit().enclose(function() {
             var session = req.query._s;
 
             delete req.query._s;
-            if (req.query[''] !== undefined)
+            if (req.query[''] !== undefined) {
                 delete req.query[''];
+            }
 
             sessionsContainer.addSessionEvent(session, req.query);
         }
@@ -84,8 +85,8 @@ module.exports = stampit().enclose(function() {
                     var nodeToDetourRelationship = _getRelationshipBetweenNodes(eventNode, detourNode);
                     var detourToNodeRelationship = _getRelationshipBetweenNodes(detourNode, eventNode);
 
-                    nodeToDetourRelationship.setProperty('count', 1);
-                    detourToNodeRelationship.setProperty('count', parseInt(detourToNodeRelationship.getProperty('count', 0)) + 1);
+                    nodeToDetourRelationship.setProperty('count', parseInt(nodeToDetourRelationship.getProperty('count', 0)) + 1);
+                    detourToNodeRelationship.setProperty('count', 0);
 
                     console.log('cyclicRelationship', eventNode.getId(), detourNode.getId(), eventNode.getId());
                 } else {
@@ -100,9 +101,11 @@ module.exports = stampit().enclose(function() {
             transaction.success();
             transaction.finish();
         }
+
+        _refreshProbabilities();
     };
 
-    setInterval(this.storeEvents, 500);
+    setInterval(this.storeEvents, 5000);
 
     /**
      * Generate properties for detour node
@@ -113,6 +116,7 @@ module.exports = stampit().enclose(function() {
         delete properties._id;
 
         properties._e = properties._e + '-detour';
+        properties._detour = true;
         properties._id = sessionsContainer.objectID(properties);
 
         return properties;
@@ -140,5 +144,51 @@ module.exports = stampit().enclose(function() {
         }
 
         return connectingRelationship;
+    };
+
+    var _refreshProbabilities = function() {
+        var query = database.queryBuilder();
+        query.startAt({
+            'event': 'node(*)'
+        });
+        query.returns('event');
+        query.execute({}, function(error, data, total) {
+            data.forEach(function(event) {
+                event = event['event'].getProperties();
+                if (event._id) {
+                    var transaction = database.beginTx();
+
+                    var countSum = 0;
+                    var eventNode = database.getOrCreate('nodes', '_id', event._id);
+                    var eventNodeRelationships = eventNode.getRelationships();
+                    for (var i in eventNodeRelationships) {
+                        var relationship = eventNodeRelationships[i];
+                        if (typeof relationship === 'object') {
+                            if (relationship.getStartNode().getId() === eventNode.getId()) {
+                                countSum = countSum + parseInt(relationship.getProperty('count', 0));
+                            }
+                        }
+                    }
+                    
+                    for (var i in eventNodeRelationships) {
+                        var relationship = eventNodeRelationships[i];
+                        if (typeof relationship === 'object') {
+                            if (relationship.getStartNode().getId() === eventNode.getId()) {
+                                var probability = 1;
+                                if (countSum > 0) {
+                                    probability = parseInt(relationship.getProperty('count', 0)) / countSum;
+                                }
+                                
+                                relationship.setProperty('probability', probability);
+                                relationship.setProperty('inversedProbability', 1 - probability);
+                            }
+                        }
+                    }
+
+                    transaction.success();
+                    transaction.finish();
+                }
+            });
+        });
     };
 });

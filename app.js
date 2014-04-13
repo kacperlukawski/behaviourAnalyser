@@ -1,4 +1,5 @@
 var configuration = require('./configuration'); // git://github.com/joewhite86/node-neo4j-embedded.git#neo4j-2.x
+var logger = require('./helpers/logger')
 var neo4j = new require('neo4j-embedded');
 var express = require('express');
 var fs = require('fs');
@@ -12,6 +13,8 @@ try {
             throw err;
         }
         
+        logger.info('Neo4j has started');
+        
         var app = express();
 
         fs.readdirSync('./controllers').forEach(function(file) {
@@ -23,6 +26,8 @@ try {
         });
 
         app.listen(3000);
+        
+        logger.info('API has started');
     });
 } catch (ex) {
     console.error(ex);

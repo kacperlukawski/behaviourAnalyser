@@ -4,7 +4,6 @@ var abstractController = require('./abstract');
 var apiController = stampit().enclose(function() {
     var database = null;
     var indexManager = null;
-    var indexName = 'events';
 
     var parseResults = function(data) {
         var results = [];
@@ -31,8 +30,8 @@ var apiController = stampit().enclose(function() {
         database = _database;
         indexManager = database.index();
         var transaction = database.beginTx();
-        if (!indexManager.existsForNodes(indexName)) {
-            indexManager.forNodes(indexName);
+        if (!indexManager.existsForNodes('nodes')) {
+            indexManager.forNodes('nodes');
         }
         transaction.success();
         transaction.finish();
