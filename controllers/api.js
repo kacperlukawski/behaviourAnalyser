@@ -7,8 +7,17 @@ var apiController = stampit().enclose(function() {
 
     var parseResults = function(data) {
         var results = [];
-        for (i in data) {
-            results.push(data[i]['event'].getProperties());
+        for (var i in data) {
+            var row = {};
+            for (var key in data[i]) {
+                if (data[i][key].getProperties) {
+                    row[key] = data[i][key].getProperties();
+                } else {
+                    row[key] = data[i][key];
+                }
+            }
+            
+            results.push(row);
         }
 
         return results;
@@ -20,6 +29,7 @@ var apiController = stampit().enclose(function() {
      */
     this.setRoutes = function(app) {
         app.get('/api/all', this.all);
+        app.get('/api/connections', this.connections);
     };
 
     /**
@@ -51,7 +61,28 @@ var apiController = stampit().enclose(function() {
         query.execute({}, function(error, data, total) {
             res.json({
                 'error': error,
-                'data': parseResults(data),
+                'events': parseResults(data),
+                'total': total
+            });
+        });
+    };
+
+    /**
+     * Returns all connections between events that have been already stored in the database
+     * @param {request} req
+     * @param {response} res
+     */
+    this.connections = function(req, res) {
+        var query = database.queryBuilder();
+        query.startAt({
+            'from': 'node(*)'
+        });
+        query.match('from-[attributes:PRECEDES]->to');
+        query.returns('from, to, attributes');
+        query.execute({}, function(error, data, total) {
+            res.json({
+                'error': error,
+                'events': parseResults(data),
                 'total': total
             });
         });

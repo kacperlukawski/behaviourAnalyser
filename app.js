@@ -2,6 +2,7 @@ var configuration = require('./configuration'); // git://github.com/joewhite86/n
 var logger = require('./helpers/logger')
 var neo4j = new require('neo4j-embedded');
 var express = require('express');
+var jade = require('jade');
 var fs = require('fs');
 
 neo4j.setDatabaseProperties(configuration.databaseProperties);
@@ -16,6 +17,9 @@ try {
         logger.info('Neo4j has started');
         
         var app = express();
+        app.set('views', __dirname + '/views');
+        app.set('view engine', 'jade');
+        app.use(express.static(__dirname + '/public'));
 
         fs.readdirSync('./controllers').forEach(function(file) {
             if ('.js' === file.substr(-3)) {

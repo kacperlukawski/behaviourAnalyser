@@ -1,12 +1,13 @@
 {
     "name": "behaviourAnalyser",
-    "version": "0.2.5",
+    "version": "0.3.0",
     "description": "Application that analyzes user behaviour using graph methods",
     "dependencies": {
         "async": "*",
         "neo4j-embedded": "*",
         "stampit": "*",
-        "express": "3.0.0"
+        "express": "3.0.0",
+        "jade": "*"
     },
     "main": "app.js",
     "author": {
