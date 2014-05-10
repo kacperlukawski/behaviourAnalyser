@@ -6,21 +6,41 @@ var apiController = stampit().enclose(function() {
     var indexManager = null;
 
     var parseResults = function(data) {
-        var results = [];
-        for (var i in data) {
-            var row = {};
-            for (var key in data[i]) {
-                if (data[i][key].getProperties) {
-                    row[key] = data[i][key].getProperties();
-                } else {
-                    row[key] = data[i][key];
-                }
-            }
-            
-            results.push(row);
+        if (data.getProperties) {
+            // there data is either node or relationship object and need
+            // to get all properties and parse them
+            return parseResults(data.getProperties());
         }
 
-        return results;
+        if (Object.prototype.toString.call(data) === '[object Array]') {
+            // data is an array, so we parse all elements of it
+            var isArray = true;
+            var results = [];
+            for (var idx in data) {
+                if (isNaN(parseFloat(idx)) || !isFinite(idx)) {
+                    isArray = false;
+                    break;
+                }
+
+                results.push(parseResults(data[idx]));
+            }
+
+            if (isArray) {
+                return results;
+            }
+        }
+
+        if (typeof data === 'object') {
+            // data is an object, so all fields of it should be parsed
+            var results = {};
+            for (var idx in data) {
+                results[idx] = parseResults(data[idx]);
+            }
+
+            return results;
+        }
+
+        return data;
     };
 
     /**
@@ -30,6 +50,7 @@ var apiController = stampit().enclose(function() {
     this.setRoutes = function(app) {
         app.get('/api/all', this.all);
         app.get('/api/connections', this.connections);
+        app.get('/api/cycles', this.cycles);
     };
 
     /**
@@ -57,6 +78,7 @@ var apiController = stampit().enclose(function() {
         query.startAt({
             'event': 'node(*)'
         });
+        query.where('HAS(event._id)');
         query.returns('event');
         query.execute({}, function(error, data, total) {
             res.json({
@@ -79,6 +101,28 @@ var apiController = stampit().enclose(function() {
         });
         query.match('from-[attributes:PRECEDES]->to');
         query.returns('from, to, attributes');
+        query.execute({}, function(error, data, total) {
+            res.json({
+                'error': error,
+                'results': parseResults(data),
+                'total': total
+            });
+        });
+    };
+
+    /**
+     * Returns all cycles in a graph
+     * @param {request} req
+     * @param {response} res
+     */
+    this.cycles = function(req, res) {
+        var query = database.queryBuilder();
+        query.startAt({
+            'from': 'node(*)'
+        });
+        query.match('cycle = from-[*..10]->from');
+        query.where('NOT HAS(from._detour)');
+        query.returns('NODES(cycle) AS nodes, RELATIONSHIPS(cycle) AS connections');
         query.execute({}, function(error, data, total) {
             res.json({
                 'error': error,

@@ -1,6 +1,6 @@
 (function(window) {
     window.ba = {
-        version: '0.3.1',
+        version: '0.5.1',
         cookieName: '_bas',
         trackingUrl: '//localhost:3000/track',
         /**
