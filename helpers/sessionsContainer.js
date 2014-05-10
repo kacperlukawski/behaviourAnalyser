@@ -87,11 +87,14 @@ module.exports = stampit().enclose(function() {
     this.objectID = function(object) {
         var innerFields = [];
         for (var key in object) {
-            innerFields.push(key + '|' + object[key]);
+            innerFields.push(key + '|' + String(object[key]));
         }
         innerFields.sort();
 
-        var id = typeof object + innerFields.join('.');
+        var id = (typeof object) + innerFields.join('.');
+        
+        logger.info('ID: ' + id);
+        
         var shasum = crypto.createHash('sha1');
         shasum.update(id);
         return shasum.digest('hex');

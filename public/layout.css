@@ -1,6 +1,26 @@
+body {
+    padding-bottom: 100px;
+}
+
 #graph {
     width: 80%;
-    height: 765px;
+    min-height: 765px;
     margin: 0px auto;
     border: 1px solid red;
+}
+
+#menu {
+    border: 1px solid green;
+    background: red;
+    position: absolute;
+    z-index: 10000;
+    display: none;
+}
+
+#description {
+    width: 100%;
+    height: 75px;
+    position: fixed;
+    bottom: 0;
+    background: yellow;
 }

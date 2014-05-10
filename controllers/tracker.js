@@ -88,12 +88,12 @@ module.exports = stampit().enclose(function() {
                     nodeToDetourRelationship.setProperty('count', parseInt(nodeToDetourRelationship.getProperty('count', 0)) + 1);
                     detourToNodeRelationship.setProperty('count', 0);
 
-                    console.log('cyclicRelationship', eventNode.getId(), detourNode.getId(), eventNode.getId());
+                    logger.info('cyclicRelationship', eventNode.getId(), detourNode.getId(), eventNode.getId());
                 } else {
                     var lastToCurrentEventRelationship = _getRelationshipBetweenNodes(lastEventNode, eventNode);
                     lastToCurrentEventRelationship.setProperty('count', parseInt(lastToCurrentEventRelationship.getProperty('count', 0)) + 1);
 
-                    console.log('relationship', lastEventNode.getId(), eventNode.getId());
+                    logger.info('relationship', lastEventNode.getId(), eventNode.getId());
                 }
 
                 sessionsContainer.setLastSessionEvent(session, event);
@@ -105,7 +105,7 @@ module.exports = stampit().enclose(function() {
         _refreshProbabilities();
     };
 
-    setInterval(this.storeEvents, 5000);
+    setInterval(this.storeEvents, 60000);
 
     /**
      * Generate properties for detour node
@@ -113,10 +113,12 @@ module.exports = stampit().enclose(function() {
      * @returns {Object}
      */
     var _getDetourNodeProperties = function(properties) {
+        var parentNodeId = properties._id;
         delete properties._id;
 
         properties._e = properties._e + '-detour';
         properties._detour = true;
+        properties._parent = parentNodeId;
         properties._id = sessionsContainer.objectID(properties);
 
         return properties;
@@ -146,6 +148,9 @@ module.exports = stampit().enclose(function() {
         return connectingRelationship;
     };
 
+    /**
+     * Updates the probabilities of going from one point to another
+     */
     var _refreshProbabilities = function() {
         var query = database.queryBuilder();
         query.startAt({
@@ -169,7 +174,7 @@ module.exports = stampit().enclose(function() {
                             }
                         }
                     }
-                    
+
                     for (var i in eventNodeRelationships) {
                         var relationship = eventNodeRelationships[i];
                         if (typeof relationship === 'object') {
@@ -178,7 +183,7 @@ module.exports = stampit().enclose(function() {
                                 if (countSum > 0) {
                                     probability = parseInt(relationship.getProperty('count', 0)) / countSum;
                                 }
-                                
+
                                 relationship.setProperty('probability', probability);
                                 relationship.setProperty('inversedProbability', 1 - probability);
                             }

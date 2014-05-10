@@ -61,7 +61,7 @@ var apiController = stampit().enclose(function() {
         query.execute({}, function(error, data, total) {
             res.json({
                 'error': error,
-                'events': parseResults(data),
+                'results': parseResults(data),
                 'total': total
             });
         });
@@ -82,14 +82,10 @@ var apiController = stampit().enclose(function() {
         query.execute({}, function(error, data, total) {
             res.json({
                 'error': error,
-                'events': parseResults(data),
+                'results': parseResults(data),
                 'total': total
             });
         });
-    };
-
-    this.runTask = function(req, res) {
-        // TODO
     };
 
 });

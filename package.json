@@ -1,6 +1,6 @@
 {
     "name": "behaviourAnalyser",
-    "version": "0.3.0",
+    "version": "0.3.5",
     "description": "Application that analyzes user behaviour using graph methods",
     "dependencies": {
         "async": "*",
