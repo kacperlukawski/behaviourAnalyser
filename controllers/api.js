@@ -1,3 +1,4 @@
+var Q = require('q');
 var stampit = require('stampit');
 var abstractController = require('./abstract');
 
@@ -18,6 +19,8 @@ var apiController = stampit().enclose(function() {
             var results = [];
             for (var idx in data) {
                 if (isNaN(parseFloat(idx)) || !isFinite(idx)) {
+                    // idx is not a number, so it's better to return
+                    // object instead of an array
                     isArray = false;
                     break;
                 }
@@ -50,7 +53,7 @@ var apiController = stampit().enclose(function() {
     this.setRoutes = function(app) {
         app.get('/api/all', this.all);
         app.get('/api/connections', this.connections);
-        app.get('/api/cycles', this.cycles);
+        app.get('/api/cycles/:eventId', this.cycles);
     };
 
     /**
@@ -121,9 +124,11 @@ var apiController = stampit().enclose(function() {
             'from': 'node(*)'
         });
         query.match('cycle = from-[*..10]->from');
-        query.where('NOT HAS(from._detour)');
+        query.where('HAS(from._id) AND from._id = { eventId }');
         query.returns('NODES(cycle) AS nodes, RELATIONSHIPS(cycle) AS connections');
-        query.execute({}, function(error, data, total) {
+        query.execute({
+            'eventId': req.params.eventId
+        }, function(error, data, total) {
             res.json({
                 'error': error,
                 'results': parseResults(data),

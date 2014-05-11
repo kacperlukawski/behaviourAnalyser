@@ -7,7 +7,8 @@
         "neo4j-embedded": "*",
         "stampit": "*",
         "express": "3.0.0",
-        "jade": "*"
+        "jade": "*",
+        "q":"*"
     },
     "main": "app.js",
     "author": {

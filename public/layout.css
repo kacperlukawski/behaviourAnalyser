@@ -1,12 +1,13 @@
 body {
-    padding-bottom: 100px;
+    font-family: monospace;
+    margin: 50px 0 125px 0;
+    padding: 0;
 }
 
 #graph {
     width: 80%;
     min-height: 765px;
     margin: 0px auto;
-    border: 1px solid red;
 }
 
 #menu {
@@ -23,4 +24,8 @@ body {
     position: fixed;
     bottom: 0;
     background: yellow;
+}
+
+ellipse {
+    cursor: pointer;
 }
