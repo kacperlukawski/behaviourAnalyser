@@ -17,6 +17,8 @@
              * SVG document
              */
             graph: SVG(graphParentId).fixSubPixelOffset(),
+            nodes: [],
+            connections: [],
             /**
              * Generates HTML id of the node
              * @param {String} id
@@ -38,7 +40,7 @@
                 var nodesOutputConnectionsCount = [];
                 for (var nodeIdx in nodes) {
                     var node = nodes[nodeIdx];
-                    var nodeId = node.event._id;
+                    var nodeId = node.event ? node.event._id : node._id;
                     var inputConnectionsCount = 0;
                     var outputConnectionsCount = 0;
 
@@ -103,7 +105,7 @@
                 var nodeVertex = graph.graph.ellipse(150, 75)
                         .move(x, y)
                         .attr('id', nodeId)
-                        .attr('app-data', attributes)
+                        .attr('app-data', JSON.stringify(attributes))
                         .attr('app-x-pos', x)
                         .attr('app-y-pos', y);
 
@@ -113,6 +115,8 @@
                             .move(x + 75, y + 25)
                             .fill(graph.nodeLabelFontColor);
                 }
+                
+                graph.nodes.push(nodeVertex);
 
                 return nodeVertex;
             },
@@ -139,6 +143,8 @@
                 arrow.attr('app-to', toId);
                 arrow.attr('app-data', JSON.stringify(attributes));
                 arrow.back();
+                
+                graph.connections.push(arrow);
 
                 return arrow;
             },
@@ -147,8 +153,19 @@
                 var bbox = graph.graph.bbox();
                 $('#' + graph.graphParentId).css({
                     width: bbox.width,
-                    height: bbox.height
+                    height: bbox.height + 120
                 });
+            },
+            clear: function(){
+                this.nodes.forEach(function(node){
+                    node.remove();
+                });
+                
+                this.connections.forEach(function(connection){
+                    connection.remove();
+                });
+                
+                this.nodes = this.connections = [];
             }
         };
     };

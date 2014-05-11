@@ -11,11 +11,36 @@ body {
 }
 
 #menu {
-    border: 1px solid green;
-    background: red;
+    border: 1px solid #343434;
+    background: #ececec;
     position: absolute;
     z-index: 10000;
     display: none;
+}
+
+#menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 10px;
+}
+
+#menu ul li {
+    margin: 0;
+    padding: 0;
+}
+
+#menu ul li b {
+    display: inline-block;
+    width: 15%;
+}
+
+#menu ul li a {
+    color: #C6E746;
+    text-decoration: underline;
+}
+
+#menu ul li a:hover {
+    text-decoration: none;
 }
 
 #description {
@@ -23,7 +48,25 @@ body {
     height: 75px;
     position: fixed;
     bottom: 0;
-    background: yellow;
+    background: #ececec;
+    border-top: 1px solid #303030;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+#description ul {
+    list-style-type: none;
+}
+
+.close {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 14px;
+    text-decoration: none;
+    text-transform: uppercase;
 }
 
 ellipse {
