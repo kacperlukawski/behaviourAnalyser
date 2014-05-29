@@ -19,6 +19,7 @@
             graph: SVG(graphParentId).fixSubPixelOffset(),
             nodes: [],
             connections: [],
+            others: [],
             /**
              * Generates HTML id of the node
              * @param {String} id
@@ -115,7 +116,7 @@
                             .move(x + 75, y + 25)
                             .fill(graph.nodeLabelFontColor);
                 }
-                
+
                 graph.nodes.push(nodeVertex);
 
                 return nodeVertex;
@@ -137,16 +138,48 @@
                 var endXPosition = endNodeBackground.cx();
                 var endYPosition = endNodeBackground.cy();// - endNodeBackground.height() / 2;
 
-                var arrow = graph.graph.line(startXPosition, startYPosition, endXPosition, endYPosition);
-                arrow.stroke(graph.arrowSettings);
-                arrow.attr('app-from', fromId);
-                arrow.attr('app-to', toId);
-                arrow.attr('app-data', JSON.stringify(attributes));
-                arrow.back();
+                var nodesDifference = endXPosition - startXPosition;
+                if (nodesDifference === 0) {
+                    nodesDifference = endYPosition - startYPosition;
+                }
+                var directionCoeff = nodesDifference / Math.abs(nodesDifference);
+                var middleXPosition = (startXPosition + endXPosition) / 2 + directionCoeff * 100;
+                var middleYPosition = (startYPosition + endYPosition) / 2;
                 
-                graph.connections.push(arrow);
+                var oldACoeff = (endXPosition !== middleXPosition) ? (endYPosition - middleYPosition) / (endXPosition - middleXPosition) : 0;
+                var oldBCoeff = endYPosition - oldACoeff * endXPosition;
+                var newACoeff = (oldACoeff === 0) ? 0 : - 1 / oldACoeff;
+                var newBCoeff = (oldACoeff - newACoeff) * (endXPosition - 45) + oldBCoeff;
 
-                return arrow;
+//                console.log('y = ' + oldACoeff + ' x + ' + oldBCoeff, ' -> y = ' + newACoeff + ' x + ' + newBCoeff);
+
+                var connectionLine = graph.graph.polyline([
+                    [startXPosition, startYPosition],
+                    [middleXPosition, middleYPosition],
+                    [endXPosition, endYPosition]]
+                        );
+                connectionLine.animate(3000);
+                connectionLine.fill('none');
+                connectionLine.stroke(graph.arrowSettings);
+                connectionLine.attr('app-from', fromId);
+                connectionLine.attr('app-to', toId);
+                connectionLine.attr('app-data', JSON.stringify(attributes));
+                connectionLine.back();
+                
+                graph.connections.push(connectionLine);
+
+//                var arrowPoints = [
+//                    [endXPosition - directionCoeff * 30, oldACoeff * (endXPosition - directionCoeff * 30) + oldBCoeff],
+//                    [endXPosition - directionCoeff * 30 + 5, newACoeff * (endXPosition - directionCoeff * 30 + 5) + newBCoeff],
+//                    [endXPosition - directionCoeff * 30 - 5, newACoeff * (endXPosition - directionCoeff * 30 - 5) + newBCoeff]
+//                ];
+//                var connectionArrow = graph.graph.polyline(arrowPoints);
+//                connectionArrow.fill('#ff0101');
+//                connectionArrow.stroke({width: 1, color: '#ff0101'});
+//                
+//                graph.others.push(connectionArrow);
+
+                return connectionLine;
             },
             adaptSize: function() {
                 var graph = this;
@@ -156,16 +189,20 @@
                     height: bbox.height + 120
                 });
             },
-            clear: function(){
-                this.nodes.forEach(function(node){
+            clear: function() {
+                this.nodes.forEach(function(node) {
                     node.remove();
                 });
-                
-                this.connections.forEach(function(connection){
+
+                this.connections.forEach(function(connection) {
                     connection.remove();
                 });
-                
-                this.nodes = this.connections = [];
+
+                this.others.forEach(function(other) {
+                    other.remove();
+                });
+
+                this.nodes = this.connections = this.others = [];
             }
         };
     };

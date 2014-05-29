@@ -95,7 +95,7 @@
             graph.clear();
             if (requestedAddress) {
                 $.getJSON(requestedAddress, function(data) {
-                    var nodesUccurences = {};
+                    var nodesOccurences = {};
                     var connectionsOccurences = {};
                     var nodes = [];
                     var connections = [];
@@ -104,8 +104,8 @@
 
                         for (var nodeIdx in path.nodes) {
                             var node = path.nodes[nodeIdx];
-                            if (!nodesUccurences[node._id]) {
-                                nodesUccurences[node._id] = true;
+                            if (!nodesOccurences[node._id]) {
+                                nodesOccurences[node._id] = true;
                                 nodes.push(node);
                             }
                         }
