@@ -1,6 +1,6 @@
 (function(window) {
     window.ba = {
-        version: '0.5.1',
+        version: '0.6.0',
         cookieName: '_bas',
         trackingUrl: '//localhost:3000/track',
         /**
@@ -19,6 +19,13 @@
             var img = document.createElement('img');
             img.setAttribute('src', this.createTrackingUrl(parameters));
             document.appendChild(img);
+        },
+        /**
+         * Set the url of the tracking service
+         * @param {String} url
+         */
+        setTrackingUrl: function(url) {
+            this.trackingUrl = url;
         },
         /**
          * Create an URL with given parameters
