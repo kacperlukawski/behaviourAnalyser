@@ -6,9 +6,11 @@
     $(document).ready(function() {
         var nodeMenu = {
             node: null,
+            availableNodes: null,
             menu: $('#menu'),
             options: {
-                'Get all cycles from selected node': '#/api/cycles/{_id}'
+                'Get all cycles from selected node': '#/api/cycles/{_id}',
+                'Get most probable move from selected node': '#/api/mostProbableMove/{_id}'
             },
             setCurrentNode: function(node) {
                 this.node = node;
@@ -22,21 +24,53 @@
                         // which names start with underscore
                         continue;
                     }
-                    
+
                     var listItem = $('<li></li>');
                     listItem.append($('<b></b>').html(key));
                     listItem.append(' ' + this.node[key]);
                     this.menu.find('ul').append(listItem);
                 }
 
-                for (var description in this.options) {
-                    var linkHref = this.options[description];
+                var options = this.options;
+
+                for (var id in this.availableNodes) {
+                    if (!id || !this.availableNodes[id]._id || this.availableNodes[id]._id === this.node._id) {
+                        continue;
+                    }
+
+                    var nodeDescription = '';
+                    for (var key in this.availableNodes[id]) {
+                        if (key === '_id' || key === '_parent') {
+                            continue;
+                        }
+
+                        nodeDescription = nodeDescription + ' ' + key + ' = "' + this.availableNodes[id][key] + '"';
+                    }
+                    nodeDescription = nodeDescription.trim();
+
+                    console.log(this.availableNodes[id]);
+
+                    Object.defineProperty(options, 'Get shortest path to (' + nodeDescription + ')', {
+                        '__proto__': null,
+                        'value': '#/api/shortestPath/{_id}/' + this.availableNodes[id]._id,
+                        'enumerable': true
+                    });
+
+                    Object.defineProperty(options, 'Get most probable path to (' + nodeDescription + ')', {
+                        '__proto__': null,
+                        'value': '#/api/mostProbablePath/{_id}/' + this.availableNodes[id]._id,
+                        'enumerable': true
+                    });
+                }
+
+                for (var description in options) {
+                    var linkHref = options[description];
                     for (var key in this.node) {
                         linkHref = linkHref.replace('{' + key + '}', this.node[key])
                     }
 
                     var listItem = $('<li></li>');
-                    var optionLink = $('<a></a>').html(description).attr('href', linkHref).click(function(){
+                    var optionLink = $('<a></a>').html(description).attr('href', linkHref).click(function() {
                         $(this).parent('li').parent('ul').parent('div').css('display', 'none');
                     });
                     listItem.append(optionLink);
@@ -82,7 +116,7 @@
                 connectionMenu.display(e);
             };
         };
-        
+
         $('.close').click(function() {
             $(this).parent('div').css('display', 'none');
             return false;
@@ -93,73 +127,63 @@
             var requestedAddress = location.hash.replace(/^#/, '');
 
             graph.clear();
-            if (requestedAddress) {
-                $.getJSON(requestedAddress, function(data) {
-                    var nodesOccurences = {};
-                    var connectionsOccurences = {};
-                    var nodes = [];
-                    var connections = [];
-                    for (var pathIdx = 0; pathIdx < data.results.length; pathIdx++) {
-                        var path = data.results[pathIdx];
+            if (!requestedAddress || requestedAddress.length === 0) {
+                // by default loads full graph
+                requestedAddress = '/api/all';
+            }
 
-                        for (var nodeIdx in path.nodes) {
-                            var node = path.nodes[nodeIdx];
-                            if (!nodesOccurences[node._id]) {
-                                nodesOccurences[node._id] = true;
-                                nodes.push(node);
-                            }
-                        }
+            $.getJSON(requestedAddress, function(data) {
+                var nodesOccurences = {};
+                var connectionsOccurences = {};
+                var nodes = [];
+                var connections = [];
+                for (var pathIdx = 0; pathIdx < data.results.length; pathIdx++) {
+                    var path = data.results[pathIdx];
 
-                        for (var connectionIdx = 0; connectionIdx < path.connections.length; connectionIdx++) {
-                            var fromNode = path.nodes[connectionIdx];
-                            var toNode = path.nodes[connectionIdx + 1];
-
-                            if (!connectionsOccurences[fromNode._id + '_' + toNode._id]) {
-                                var connection = {
-                                    'from': fromNode,
-                                    'to': toNode,
-                                    'attributes': path.connections[connectionIdx]
-                                };
-
-                                connectionsOccurences[fromNode._id + '_' + toNode._id] = true;
-                                connections.push(connection);
-                            }
+                    for (var nodeIdx in path.nodes) {
+                        var node = path.nodes[nodeIdx];
+                        if (!nodesOccurences[node._id]) {
+                            nodesOccurences[node._id] = true;
+                            nodes.push(node);
                         }
                     }
 
-                    var nodesPositions = graph.calculateNodesPositions(nodes, connections);
+                    for (var connectionIdx = 0; connectionIdx < path.connections.length; connectionIdx++) {
+                        var fromNode = path.nodes[connectionIdx];
+                        var toNode = path.nodes[connectionIdx + 1];
 
-                    nodes.forEach(function(node, i) {
-                        var nodeVertex = graph.drawNode(node._id, node._e, node, nodesPositions[i].x, nodesPositions[i].y);
-                        nodeVertex.click(onNodeClick(node));
-                    });
+                        if (!connectionsOccurences[fromNode._id + '_' + toNode._id]) {
+                            var connection = {
+                                'from': fromNode,
+                                'to': toNode,
+                                'attributes': path.connections[connectionIdx]
+                            };
 
-                    connections.forEach(function(connection, i) {
-                        var connectionEdge = graph.drawConnection(connection.from._id, connection.to._id, connection.attributes);
-                        connectionEdge.mouseover(onEdgeMouseOver(connection.attributes));
-                    });
+                            connectionsOccurences[fromNode._id + '_' + toNode._id] = true;
+                            connections.push(connection);
+                        }
+                    }
+                }
 
-                    graph.adaptSize();
+                var nodesPositions = graph.calculateNodesPositions(nodes, connections);
+
+                nodes.forEach(function(node, i) {
+                    var nodeVertex = graph.drawNode(node._id, node._e, node, nodesPositions[i].x, nodesPositions[i].y);
+                    nodeVertex.click(onNodeClick(node));
                 });
-            } else {
-                $.getJSON('/api/all', function(events) {
-                    $.getJSON('/api/connections', function(connections) {
-                        var nodesPositions = graph.calculateNodesPositions(events.results, connections.results);
 
-                        events.results.forEach(function(node, i) {
-                            var nodeVertex = graph.drawNode(node.event._id, node.event._e, node.event, nodesPositions[i].x, nodesPositions[i].y);
-                            nodeVertex.click(onNodeClick(node.event));
-                        });
-
-                        connections.results.forEach(function(connection, i) {
-                            var connectionEdge = graph.drawConnection(connection.from._id, connection.to._id, connection.attributes);
-                            connectionEdge.mouseover(onEdgeMouseOver(connection.attributes));
-                        });
-
-                        graph.adaptSize();
-                    });
+                connections.forEach(function(connection, i) {
+                    var connectionEdge = graph.drawConnection(connection.from._id, connection.to._id, connection.attributes);
+                    connectionEdge.mouseover(onEdgeMouseOver(connection.attributes));
                 });
-            }
+
+                graph.adaptSize();
+
+                nodeMenu.availableNodes = nodes;
+            });
+
+            // scroll window to top
+            $(window).scrollTop(0);
         });
 
         $(window).trigger('hashchange');

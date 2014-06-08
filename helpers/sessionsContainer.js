@@ -93,8 +93,6 @@ module.exports = stampit().enclose(function() {
 
         var id = (typeof object) + innerFields.join('.');
         
-        logger.info('ID: ' + id);
-        
         var shasum = crypto.createHash('sha1');
         shasum.update(id);
         return shasum.digest('hex');

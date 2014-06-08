@@ -11,8 +11,8 @@ body {
 }
 
 #menu {
-    border: 1px solid #343434;
-    background: #ececec;
+    border: 1px solid #0B486B;
+    background: #3B8686;
     position: absolute;
     z-index: 10000;
     display: none;
@@ -35,38 +35,78 @@ body {
 }
 
 #menu ul li a {
-    color: #C6E746;
+    color: #FFFFFF;
     text-decoration: underline;
 }
 
 #menu ul li a:hover {
+    color: #A8DBA8;
     text-decoration: none;
 }
 
 #description {
     width: 100%;
-    height: 75px;
+    height: 100px;
     position: fixed;
     bottom: 0;
-    background: #ececec;
-    border-top: 1px solid #303030;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    background: #3B8686;
+}
+
+#description #options {
+    height: 30px;
+    padding: 5px 50px;
+    background: #0B486B;
+}
+
+#decription #options a {    
+    border: 10px solid #79BD9A;
+    text-decoration: none;
+}
+
+#description #options a span {
+    padding: 5px 10px 0px 10px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #FFFFFF;
+    border: 0px;
 }
 
 #description ul {
     list-style-type: none;
+    margin: 0px;
+    padding: 5px 50px;
+}
+
+#description ul li {
+    margin: 0px;
+    padding: 0px;
+    color: #FFFFFF;
+}
+
+#description ul li b {
+    display: inline-block;
+    width: 150px;
+    text-transform: uppercase;
 }
 
 .close {
     position: absolute;
     top: 1px;
     right: 2px;
+    color: #A8DBA8;
     font-family: monospace;
     font-weight: bold;
     font-size: 14px;
     text-decoration: none;
     text-transform: uppercase;
+}
+
+.icon {
+    width: 24px;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    vertical-align: middle;
 }
 
 ellipse {

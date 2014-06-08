@@ -7,7 +7,7 @@ var apiController = stampit().enclose(function() {
     var indexManager = null;
 
     var parseResults = function(data) {
-        if (data.getProperties) {
+        if (data && data.getProperties) {
             // there data is either node or relationship object and need
             // to get all properties and parse them
             return parseResults(data.getProperties());
@@ -54,6 +54,9 @@ var apiController = stampit().enclose(function() {
         app.get('/api/all', this.all);
         app.get('/api/connections', this.connections);
         app.get('/api/cycles/:eventId', this.cycles);
+        app.get('/api/shortestPath/:startEventId/:endEventId', this.shortestPath);
+        app.get('/api/mostProbablePath/:startEventId/:endEventId', this.mostProbablePath);
+        app.get('/api/mostProbableMove/:eventId', this.mostProbableMove);
     };
 
     /**
@@ -72,17 +75,18 @@ var apiController = stampit().enclose(function() {
     };
 
     /**
-     * Returns all events that have been already stored in the database
+     * Returns all events and connections that have been already stored in the database
      * @param {request} req
      * @param {response} res
      */
     this.all = function(req, res) {
         var query = database.queryBuilder();
         query.startAt({
-            'event': 'node(*)'
+            'from': 'node(*)',
+            'to': 'node(*)'
         });
-        query.where('HAS(event._id)');
-        query.returns('event');
+        query.match('p = from-[attributes:PRECEDES]->to');
+        query.returns('NODES(p) AS nodes, RELATIONSHIPS(p) AS connections');
         query.execute({}, function(error, data, total) {
             res.json({
                 'error': error,
@@ -94,6 +98,7 @@ var apiController = stampit().enclose(function() {
 
     /**
      * Returns all connections between events that have been already stored in the database
+     * @deprecated
      * @param {request} req
      * @param {response} res
      */
@@ -123,12 +128,86 @@ var apiController = stampit().enclose(function() {
         query.startAt({
             'from': 'node(*)'
         });
-        query.match('cycle = from-[*..10]->from');
+        query.match('cycle = from-[attributes:PRECEDES*..10]->from');
         query.where('HAS(from._id) AND from._id = { eventId }');
         query.returns('NODES(cycle) AS nodes, RELATIONSHIPS(cycle) AS connections');
         query.execute({
             'eventId': req.params.eventId
         }, function(error, data, total) {
+            res.json({
+                'error': error,
+                'results': parseResults(data),
+                'total': total
+            });
+        });
+    };
+
+    /**
+     * Returns the shortest path between selected nodes
+     * @param {request} req
+     * @param {response} res
+     */
+    this.shortestPath = function(req, res) {
+        var query = database.queryBuilder();
+        query.startAt({
+            'from': 'node(*)',
+            'to': 'node(*)'
+        });
+        query.match('p = shortestPath(from-[attributes:PRECEDES*..10]->to)');
+        query.where('HAS(from._id) AND from._id = { startEventId } AND HAS(to._id) AND to._id = { endEventId }');
+        query.returns('NODES(p) AS nodes, RELATIONSHIPS(p) AS connections');
+        query.execute({
+            'startEventId': req.params.startEventId,
+            'endEventId': req.params.endEventId
+        }, function(error, data, total) {
+            res.json({
+                'error': error,
+                'results': parseResults(data),
+                'total': total
+            });
+        });
+    };
+
+    /**
+     * Returns the most probable path between selected nodes
+     * @param {request} req
+     * @param {response} res
+     */
+    this.mostProbablePath = function(req, res) {
+        database.query(
+                'START from = NODE(*), to = NODE(*)\n' +
+                'MATCH p = from-[attributes:PRECEDES*..10]->to\n' +
+                'WHERE HAS(from._id) AND from._id = { startEventId } AND HAS(to._id) AND to._id = { endEventId }\n' +
+                'WITH p, EXTRACT(x in attributes: x.inversedProbability) AS inversedProbabilities, LENGTH(p) AS len\n' +
+                'RETURN NODES(p) AS nodes, RELATIONSHIPS(p) AS connections, REDUCE(res = 0, x in inversedProbabilities: res + x) AS cost, inversedProbabilities, len\n' +
+                'ORDER BY cost ASC\n' +
+                'LIMIT 1', {
+                    'startEventId': req.params.startEventId,
+                    'endEventId': req.params.endEventId
+                }, function(error, data, total) {
+            res.json({
+                'error': error,
+                'results': parseResults(data),
+                'total': total
+            });
+        });
+    };
+
+    /**
+     * Returns the most probable path between selected nodes
+     * @param {request} req
+     * @param {response} res
+     */
+    this.mostProbableMove = function(req, res) {
+        database.query(
+                'START from = NODE(*), to = NODE(*)\n' +
+                'MATCH p = from-[attributes:PRECEDES]->to\n' +
+                'WHERE HAS(from._id) AND from._id = { eventId } AND HAS(to._id)\n' +
+                'RETURN NODES(p) AS nodes, RELATIONSHIPS(p) AS connections, attributes.probability AS cost\n' +
+                'ORDER BY cost DESC\n' +
+                'LIMIT 1', {
+                    'eventId': req.params.eventId
+                }, function(error, data, total) {
             res.json({
                 'error': error,
                 'results': parseResults(data),
