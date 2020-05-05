@@ -6,7 +6,7 @@
         "async": "*",
         "neo4j-embedded": "*",
         "stampit": "*",
-        "express": "3.0.0",
+        "express": "4.17.1",
         "jade": "*"
     },
     "main": "app.js",
